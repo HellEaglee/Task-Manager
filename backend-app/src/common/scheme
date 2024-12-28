@@ -1,0 +1,72 @@
+-- Table to store users
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL -- Stores hashed passwords
+);
+
+-- Table to store workplaces
+CREATE TABLE workplaces (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    creator_id INT NOT NULL REFERENCES users (id) ON DELETE SET NULL -- The creator/admin of the workplace
+);
+
+-- Table to map users to workplaces (for multi-user access)
+CREATE TABLE workplace_users (
+    id SERIAL PRIMARY KEY,
+    workplace_id INT NOT NULL REFERENCES workplaces (id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    role VARCHAR(50) NOT NULL DEFAULT 'member' -- Role can be 'admin', 'member', etc.
+);
+
+-- Table to store boards
+CREATE TABLE boards (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    img VARCHAR(2048),
+    workplace_id INT NOT NULL REFERENCES workplaces (id) ON DELETE CASCADE
+);
+
+-- Table to store cards (columns on boards, e.g., To Do, In Progress)
+CREATE TABLE cards (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    board_id INT NOT NULL REFERENCES boards (id) ON DELETE CASCADE
+);
+
+-- Table to store tasks (individual tasks within cards)
+CREATE TABLE tasks (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    due DATE,
+    card_id INT NOT NULL REFERENCES cards (id) ON DELETE CASCADE
+);
+
+-- Table to store labels (e.g., High, Medium, Low priority)
+CREATE TABLE labels (
+    id SERIAL PRIMARY KEY,
+    color VARCHAR(7) NOT NULL, -- Hex color code
+    title VARCHAR(255) NOT NULL,
+    task_id INT NOT NULL REFERENCES tasks (id) ON DELETE CASCADE
+);
+
+-- Table to store comments for tasks
+CREATE TABLE comments (
+    id SERIAL PRIMARY KEY,
+    user_name VARCHAR(255) NOT NULL,
+    comment TEXT NOT NULL,
+    timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    task_id INT NOT NULL REFERENCES tasks (id) ON DELETE CASCADE
+);
+
+-- Table to store attachments for tasks
+CREATE TABLE attachments (
+    id SERIAL PRIMARY KEY,
+    file_name VARCHAR(255) NOT NULL,
+    file_url VARCHAR(2048) NOT NULL,
+    uploaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    task_id INT NOT NULL REFERENCES tasks (id) ON DELETE CASCADE
+);
